@@ -1,117 +1,54 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Put, Res } from '@nestjs/common';
-import {ProductsService} from '../products/products.service';
-import { Product } from './interface/product/product.interface';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, Put, Delete, UsePipes, ValidationPipe, Patch, HttpStatus, HttpCode, Query } from '@nestjs/common';
+import { ProductsService } from './products.service';
+import { CreateProductDto } from './dto/products.dto/create-product.dto';
+import { UpdateProductDto } from './dto/products.dto/update-product.dto';
+import { PartialUpdateProductDto } from './dto/products.dto/partial-update-product.dto';
+import { Product } from './products.entity';
 
 @Controller('products')
 export class ProductsController {
-    constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) {}
 
-    @Get()
-    getAllProducts(): Product[] {
-        return this.productsService.getAll();
+  @Post()
+  @UsePipes(new ValidationPipe())
+  async create(@Body() createProductDto: CreateProductDto): Promise<Product> {
+    return await this.productsService.create(createProductDto);
+  }
+
+  @Get()
+  async findAll(
+    @Query('name') name?: string,
+    @Query('description') description?: string,
+  ): Promise<Product[]> {
+    if (name || description) {
+      return await this.productsService.find(name, description);
     }
-    
-    @Post()
-    @HttpCode(201)
-    createProducts(
-        @Body('name') name: string,
-        @Body('description') description: string
-    ) {
-        this.productsService.insert({
-            id: this.productsService.getAll().length,
-            name,
-            description
-        });
-    }
+    return await this.productsService.findAll();
+  }
 
-    @Get('inventario')
-    getHelloInProducts(): string{
-        return "Estamos en productos con una funcionalidad nueva!!"
-    }
-//Recibir un parametro en la URL
-    // @Get(':id')
-    // find(@Param() params) {
-    //     return `Estas consultando el producto ${params.id}`;
-    // }
+  @Get(':id')
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Product> {
+    return await this.productsService.findOne(id);
+  }
 
-//RECIBIR VARIOS PARAMETROS EN LA URL
+  @Put(':id')
+  @UsePipes(new ValidationPipe())
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateProductDto: UpdateProductDto): Promise<Product> {
+    return await this.productsService.update(id, updateProductDto);
+  }
 
-    // @Get(':id/:size')
-    // findWithSize( @Param() params) {
-    //     return `productos con id: ${params.id} ----- size: ${params.size}`;
-    // }
+  @Patch(':id')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async partialUpdate(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() partialUpdateProductDto: PartialUpdateProductDto,
+  ): Promise<Product> {
+    return await this.productsService.update(id, partialUpdateProductDto);
+  }
 
-//DESESTRUCTURAR PARAMETROS DE URL
-
-    // @Get(':id')
-    // find(@Param('id') id: number) {
-    //     return `Pagina del producto ${id}`;
-    // }
-
-//RECIBIR VARIOS PARAMETROS EN LA URL TIPADOS Y DESAGREGADOS
-
-    @Get(':id/:size')
-    findWithSize( @Param('id') id: number, @Param('size') size: string) {
-        return `productos con id: ${id} ----- size: ${size}`;
-    }
-
-//USO DE POST
-
-    @Post()
-    @HttpCode(HttpStatus.NO_CONTENT)
-    createProduct(@Body() body){
-        return body
-    }
-
-    //@Post()
-    //@HttpCode()
-    //crearteProduct(
-    //    @Body('name') name: string,
-    //    @Body('description') description: string,
-    //) {
-    //    return `Crear producto ${name} con la descripcion: ${description}`;
-    //}
-
-    @Get('ruta-error-404')
-    @HttpCode(HttpStatus.NOT_FOUND)
-    rutaConError404() {
-        return 'Esto es un error 404!! no existe';
-    }
-
-    //DECORADOR RES
-
-    @Get(':id')
-    find(@Res() response, @Param('id', ParseIntPipe) id:number) {
-        if(id<100) {
-            return response.status(HttpStatus.OK).send(`Pagina del producto: ${id}`);
-        } else {
-            return response.status(HttpStatus.NOT_FOUND).send(`Producto inexistente`);
-        }
-    }
-
-    //DECORADOR PUT
-
-    @Put(':id')
-    update(@Param('id') id: number, @Body() body) {
-        return `Estas haciendo una operacion de actualizacion del recurso ${id} con ${body.name} 
-        y ${body.description}`;
-    }
-
-    //DECORADOR PATCH
-
-    @Patch(':id')
-    partialUpdate(@Param('id') id: number, @Body() body) {
-        return `Actualización parcial del itam ${id}`;
-    }
-
-    //DECORADOR DELETE
-
-    @Delete(':id')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    delete(@Param('id') id: number) {
-        return `Hemos borrado el producto ${id}`;
-    }
-
-
-
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.productsService.remove(id);
+  }
 }

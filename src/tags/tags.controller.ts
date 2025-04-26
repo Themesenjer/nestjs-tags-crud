@@ -30,7 +30,7 @@ import {
   
     @Get('slug/:slug')
     getBySlug(@Param('slug') slug: string): Tag {
-      return this.tagsService.findBySlug(slug);
+      return this.tagsService.findBySlug(slug); // Ruta que permite búsqueda dinámica
     }
   
     @Post()

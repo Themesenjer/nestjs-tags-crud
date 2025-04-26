@@ -24,7 +24,7 @@ import {
     }
   
     findBySlug(slug: string): Tag {
-      const tag = this.tags.find((t) => t.slug === slug);
+      const tag = this.tags.find((t) => t.slug === slug);  //Busca dinamica x slug
       if (!tag) throw new NotFoundException(`Slug '${slug}' no encontrado`);
       return tag;
     }
@@ -35,7 +35,7 @@ import {
       }
   
       const tag: Tag = {
-        id: uuidv4(),
+        id: uuidv4(),     // Aquí se genera el UUID automáticamente
         ...dto,
       };
       this.tags.push(tag);
